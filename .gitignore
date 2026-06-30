@@ -1,0 +1,6 @@
+.DS_Store
+*.pem
+Archive/
+.claude/
+v1/blackhole.html
+v1/screenshot.png

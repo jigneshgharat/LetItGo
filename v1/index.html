@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+  <title>Let It Go</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #000;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+      cursor: default;
+      font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    }
+
+    canvas {
+      display: block;
+      position: fixed;
+      top: 0;
+      left: 0;
+    }
+
+    /* --- Landing title + tagline (top half) --- */
+    .landing {
+      position: fixed;
+      top: 18%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 12;
+      text-align: center;
+      pointer-events: none;
+      user-select: none;
+      opacity: 0;
+      transition: opacity 1.5s ease-out;
+    }
+    .landing.visible {
+      opacity: 1;
+    }
+    .landing.fading {
+      opacity: 0;
+    }
+    .landing-title {
+      font-family: 'Outfit', 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      font-size: 4.2rem;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      margin-bottom: 18px;
+      color: #ffffff;
+    }
+    .landing-tagline {
+      font-family: 'Outfit', 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      font-size: 1.5rem;
+      font-weight: 400;
+      letter-spacing: 0.2em;
+      text-transform: lowercase;
+      color: rgba(200, 215, 235, 0.9);
+    }
+    .tagline-part {
+      opacity: 0;
+      transition: opacity 1.2s ease-out;
+    }
+    .tagline-part.visible {
+      opacity: 1;
+    }
+
+    /* --- Closing line (after collapse) --- */
+    .closing-line {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 35;
+      text-align: center;
+      font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      font-size: 2.08rem;
+      line-height: 2.6;
+      font-weight: 300;
+      letter-spacing: 0.1em;
+      color: rgba(200, 215, 235, 0);
+      pointer-events: none;
+      user-select: none;
+      transition: color 3s ease-out;
+      max-width: none;
+      white-space: nowrap;
+    }
+    .closing-line.visible {
+      color: rgba(200, 215, 235, 0.7);
+    }
+    .closing-line.fading {
+      color: rgba(200, 215, 235, 0);
+      transition: color 2s ease-out;
+    }
+
+    /* --- In-ring text display (typed or transcribed) --- */
+    .ring-text {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 35;
+      width: min(420px, 60vw);
+      max-height: 600px;
+      text-align: center;
+      color: rgba(160, 210, 230, 0.0);
+      font-size: 1.32rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      line-height: 1.6;
+      pointer-events: none;
+      user-select: none;
+      transition: color 0.3s;
+      word-wrap: break-word;
+      overflow: hidden;
+    }
+    .ring-text.active {
+      color: rgba(255, 255, 255, 0.85);
+    }
+    .ring-text.collapse-text {
+      color: rgba(255, 255, 255, 0.95);
+      text-shadow:
+        0 0 8px rgba(0, 0, 0, 0.9),
+        0 0 20px rgba(0, 0, 0, 0.7),
+        0 0 40px rgba(0, 0, 0, 0.5),
+        0 0 60px rgba(0, 0, 0, 0.3);
+    }
+    .ring-text.ring-placeholder {
+      color: rgba(200, 230, 245, 0.55);
+      font-weight: 400;
+    }
+    .ring-text .cursor {
+      display: inline-block;
+      width: 1.5px;
+      height: 1.15em;
+      background: rgba(160, 210, 230, 0.6);
+      vertical-align: text-bottom;
+      margin-left: 2px;
+      animation: blink 1s step-end infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    /* Hidden textarea for capturing keystrokes */
+    .hidden-input {
+      position: fixed;
+      top: 0;
+      left: -9999px;
+      opacity: 0;
+      width: 1px;
+      height: 1px;
+    }
+
+    /* --- Mode buttons (Type / Voice icons) --- */
+    .mode-toggle {
+      position: fixed;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+      display: flex;
+      gap: 16px;
+      opacity: 0;
+      transition: opacity 0.6s;
+    }
+    .mode-toggle.visible { opacity: 1; }
+
+    .mode-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: transparent;
+      border: 1px solid rgba(140, 200, 220, 0.15);
+      color: rgba(140, 200, 220, 0.3);
+      cursor: pointer;
+      transition: color 0.3s, background 0.3s, border-color 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+    .mode-btn .material-icons-outlined {
+      font-size: 32px;
+    }
+    .mode-btn:hover {
+      color: rgba(140, 200, 220, 0.6);
+      border-color: rgba(140, 200, 220, 0.3);
+    }
+    .mode-btn.active {
+      color: rgba(160, 220, 240, 0.9);
+      background: rgba(140, 200, 220, 0.1);
+      border-color: rgba(140, 200, 220, 0.4);
+    }
+
+    /* --- Done / Let It Go button --- */
+    .done-btn {
+      position: fixed;
+      bottom: 148px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+      padding: 14px 64px;
+      background: rgba(100, 200, 230, 0.0);
+      border: 1.5px solid rgba(100, 200, 230, 0.0);
+      border-radius: 28px;
+      color: rgba(100, 200, 230, 0.0);
+      font-family: 'Inter', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      font-size: 0.95rem;
+      font-weight: 400;
+      letter-spacing: 0.14em;
+      cursor: pointer;
+      transition: all 0.6s;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .done-btn.visible {
+      background: rgba(100, 200, 230, 0.15);
+      border-color: rgba(100, 200, 230, 0.5);
+      color: rgba(200, 235, 245, 0.9);
+      pointer-events: auto;
+    }
+    .done-btn.visible:hover {
+      background: rgba(100, 200, 230, 0.25);
+      border-color: rgba(100, 200, 230, 0.7);
+      color: rgba(220, 245, 255, 1.0);
+    }
+
+    /* --- Voice active indicator (pulse on mic icon) --- */
+    .mode-btn.listening {
+      animation: mic-pulse 2s ease-in-out infinite;
+    }
+    @keyframes mic-pulse {
+      0%, 100% { box-shadow: none; }
+      50% { box-shadow: 0 0 16px rgba(100, 220, 240, 0.25); }
+    }
+
+    /* --- Tooltips for mode buttons --- */
+    .mode-btn-wrap {
+      position: relative;
+      display: inline-flex;
+    }
+    .mode-btn-wrap .btn-tooltip {
+      position: absolute;
+      bottom: calc(100% + 10px);
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 5px 12px;
+      background: rgba(20, 40, 50, 0.85);
+      border: 1px solid rgba(140, 200, 220, 0.2);
+      border-radius: 6px;
+      color: rgba(180, 215, 235, 0.85);
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s;
+    }
+    .mode-btn-wrap:hover .btn-tooltip {
+      opacity: 1;
+    }
+
+    /* --- Learn More button (top right) --- */
+    .info-icon {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 20;
+      padding: 6px 16px;
+      border-radius: 20px;
+      background: rgba(140, 200, 220, 0.08);
+      border: 1px solid rgba(140, 200, 220, 0.15);
+      color: rgba(140, 200, 220, 0.4);
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 400;
+      letter-spacing: 0.06em;
+      opacity: 0;
+      transition: opacity 0.6s, color 0.3s, border-color 0.3s, background 0.3s;
+    }
+    .info-icon.visible { opacity: 1; }
+    .info-icon:hover {
+      color: rgba(140, 200, 220, 0.7);
+      border-color: rgba(140, 200, 220, 0.3);
+      background: rgba(140, 200, 220, 0.12);
+    }
+    .info-modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: rgba(0, 0, 0, 0.75);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s;
+    }
+    .info-modal-overlay.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .info-modal {
+      position: relative;
+      max-width: 580px;
+      width: 92%;
+      max-height: 80vh;
+      overflow-y: auto;
+      padding: 44px 40px 40px;
+      background: rgba(10, 20, 30, 0.95);
+      border: 1px solid rgba(140, 200, 220, 0.12);
+      border-radius: 18px;
+      color: rgba(190, 220, 235, 0.85);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.88rem;
+      font-weight: 300;
+      line-height: 1.75;
+      letter-spacing: 0.02em;
+      transform: scale(0.95);
+      transition: transform 0.4s;
+    }
+    .info-modal-overlay.visible .info-modal {
+      transform: scale(1);
+    }
+    .info-modal-close {
+      position: absolute;
+      top: 16px;
+      right: 18px;
+      width: 30px;
+      height: 30px;
+      border: none;
+      background: rgba(140, 200, 220, 0.06);
+      border-radius: 50%;
+      color: rgba(140, 200, 220, 0.45);
+      font-size: 1.15rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.2s, background 0.2s;
+    }
+    .info-modal-close:hover {
+      color: rgba(140, 200, 220, 0.8);
+      background: rgba(140, 200, 220, 0.12);
+    }
+    .info-modal h2 {
+      font-size: 1.25rem;
+      font-weight: 500;
+      color: rgba(160, 210, 230, 0.95);
+      margin: 0 0 8px;
+      letter-spacing: 0.06em;
+    }
+    .info-modal .info-subtitle {
+      font-size: 0.85rem;
+      color: rgba(140, 200, 220, 0.5);
+      margin: 0 0 32px;
+      font-weight: 300;
+    }
+    .info-modal h3 {
+      font-size: 0.92rem;
+      font-weight: 500;
+      color: rgba(160, 210, 230, 0.8);
+      margin: 28px 0 12px;
+      letter-spacing: 0.04em;
+    }
+    .info-modal h3:first-of-type {
+      margin-top: 0;
+    }
+    .info-modal p {
+      margin: 0 0 16px;
+    }
+    .info-modal .info-privacy {
+      margin-top: 28px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(140, 200, 220, 0.08);
+    }
+    .info-modal .info-privacy p {
+      margin-bottom: 0;
+    }
+
+    /* --- Privacy reassurance --- */
+    .privacy-note {
+      position: fixed;
+      bottom: 44px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+      color: rgba(140, 180, 200, 0.35);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.68rem;
+      font-weight: 300;
+      letter-spacing: 0.08em;
+      text-align: center;
+      pointer-events: none;
+      user-select: none;
+      opacity: 0;
+      transition: opacity 0.6s;
+      white-space: nowrap;
+    }
+    .privacy-note.visible { opacity: 1; }
+
+    /* --- Voice unsupported tooltip --- */
+    .voice-unsupported {
+      position: fixed;
+      bottom: 140px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 25;
+      padding: 8px 20px;
+      background: rgba(30, 20, 15, 0.85);
+      border: 1px solid rgba(220, 160, 100, 0.3);
+      border-radius: 8px;
+      color: rgba(220, 190, 150, 0.9);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 300;
+      letter-spacing: 0.04em;
+      opacity: 0;
+      transition: opacity 0.4s;
+      pointer-events: none;
+    }
+    .voice-unsupported.show { opacity: 1; }
+
+    /* --- Restart modal --- */
+    .restart-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      z-index: 40;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.0);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 1.5s ease-out;
+    }
+    .restart-overlay.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .restart-modal {
+      text-align: center;
+      max-width: 340px;
+      padding: 40px 36px 32px;
+    }
+    .restart-modal .feedback-section {
+      margin-bottom: 40px;
+    }
+    .restart-modal .feedback-question {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 300;
+      letter-spacing: 0.04em;
+      color: rgba(180, 215, 235, 0.6);
+      margin-bottom: 16px;
+    }
+    .restart-modal .feedback-options {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .restart-modal .feedback-btn {
+      padding: 8px 16px;
+      background: rgba(140, 200, 220, 0.06);
+      border: 1px solid rgba(140, 200, 220, 0.15);
+      border-radius: 20px;
+      color: rgba(180, 215, 235, 0.6);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 300;
+      letter-spacing: 0.03em;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .restart-modal .feedback-btn:hover {
+      background: rgba(140, 200, 220, 0.12);
+      border-color: rgba(140, 200, 220, 0.3);
+      color: rgba(200, 230, 245, 0.85);
+    }
+    .restart-modal .feedback-btn.selected {
+      background: rgba(100, 200, 230, 0.15);
+      border-color: rgba(100, 200, 230, 0.5);
+      color: rgba(220, 245, 255, 0.95);
+    }
+    .restart-modal .feedback-thanks {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 300;
+      color: rgba(140, 200, 220, 0.45);
+      margin-top: 12px;
+      opacity: 0;
+      transition: opacity 0.5s;
+    }
+    .restart-modal .feedback-thanks.visible {
+      opacity: 1;
+    }
+    .restart-modal .creator-label {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.68rem;
+      font-weight: 300;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(160, 190, 210, 0.4);
+      margin-bottom: 6px;
+    }
+    .restart-modal .creator-name {
+      font-family: 'Outfit', 'Inter', sans-serif;
+      font-size: 1.15rem;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      color: rgba(180, 215, 235, 0.8);
+      margin-bottom: 4px;
+    }
+    .restart-modal .creator-site {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.75rem;
+      font-weight: 300;
+      letter-spacing: 0.04em;
+      margin-bottom: 36px;
+    }
+    .restart-modal .creator-site a {
+      color: rgba(140, 200, 220, 0.5);
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+    .restart-modal .creator-site a:hover {
+      color: rgba(140, 200, 220, 0.8);
+    }
+    .restart-modal .again-btn {
+      padding: 14px 52px;
+      background: rgba(100, 200, 230, 0.12);
+      border: 1.5px solid rgba(100, 200, 230, 0.4);
+      border-radius: 28px;
+      color: rgba(200, 235, 245, 0.85);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 400;
+      letter-spacing: 0.12em;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .restart-modal .again-btn:hover {
+      background: rgba(100, 200, 230, 0.22);
+      border-color: rgba(100, 200, 230, 0.65);
+      color: rgba(220, 245, 255, 1);
+    }
+  </style>
+</head>
+<body>
+  <canvas id="void"></canvas>
+
+  <!-- Landing title -->
+  <div class="landing" id="landing">
+    <div class="landing-title" id="landingTitle">Let It Go</div>
+    <div class="landing-tagline" id="landingTagline"><span class="tagline-part" id="tag1">say it.</span> <span class="tagline-part" id="tag2">feel it.</span> <span class="tagline-part" id="tag3">release it.</span></div>
+  </div>
+  <div class="closing-line" id="closingLine"></div>
+  <div class="ring-text" id="ringText"></div>
+
+  <!-- Info icon + modal -->
+  <div class="info-icon" id="infoIcon">Learn More</div>
+  <div class="info-modal-overlay" id="infoModal">
+    <div class="info-modal">
+      <button class="info-modal-close" id="infoModalClose">&times;</button>
+      <h2>Let It Go</h2>
+      <p class="info-subtitle">A therapeutic space to release what weighs on you.</p>
+      <h3>Why it works</h3>
+      <p>Research in expressive writing shows that putting difficult emotions into words reduces their intensity. James Pennebaker's studies found that even brief emotional disclosure lowers stress hormones and improves wellbeing.</p>
+      <p>The act of naming what troubles you activates the prefrontal cortex, which helps regulate the amygdala — your brain's threat center. Psychologists call this "affect labelling" — simply describing a feeling makes it less overwhelming.</p>
+      <p>Watching your words dissolve into the void mirrors the cognitive defusion techniques used in Acceptance and Commitment Therapy (ACT) — observing your thoughts as temporary events rather than fixed truths.</p>
+      <div class="info-privacy">
+        <h3>Your privacy</h3>
+        <p>Nothing you type or speak here is stored, transmitted, or recorded. This space is entirely yours.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden textarea captures typing input -->
+  <textarea class="hidden-input" id="hiddenInput" autocomplete="off" spellcheck="false"></textarea>
+
+  <!-- Done button (above toggle) -->
+  <button class="done-btn" id="doneBtn">Let It Go</button>
+
+  <!-- Privacy reassurance -->
+  <div class="privacy-note" id="privacyNote">your words stay here. nothing is saved.</div>
+
+  <!-- Mode buttons -->
+  <div class="mode-toggle" id="modeToggle">
+    <div class="mode-btn-wrap">
+      <button class="mode-btn" id="btnType" data-mode="type">
+        <span class="material-icons-outlined">keyboard</span>
+      </button>
+      <span class="btn-tooltip">type</span>
+    </div>
+    <div class="mode-btn-wrap">
+      <button class="mode-btn" id="btnVoice" data-mode="voice">
+        <span class="material-icons-outlined">mic</span>
+      </button>
+      <span class="btn-tooltip">speak</span>
+    </div>
+  </div>
+
+  <!-- Voice unsupported tooltip -->
+  <div class="voice-unsupported" id="voiceUnsupported">Voice is not supported in this browser.</div>
+
+  <!-- Restart modal -->
+  <div class="restart-overlay" id="restartOverlay">
+    <div class="restart-modal">
+      <div class="feedback-section" id="feedbackSection">
+        <div class="feedback-question">How do you feel?</div>
+        <div class="feedback-options" id="feedbackOptions">
+          <button class="feedback-btn" data-feeling="lighter">Lighter</button>
+          <button class="feedback-btn" data-feeling="calm">Calm</button>
+          <button class="feedback-btn" data-feeling="reflective">Reflective</button>
+          <button class="feedback-btn" data-feeling="unchanged">Unchanged</button>
+        </div>
+        <div class="feedback-thanks" id="feedbackThanks">Thank you</div>
+      </div>
+      <div class="creator-label">created by</div>
+      <div class="creator-name">Jignesh Gharat</div>
+      <div class="creator-site"><a href="https://www.jigneshgharat.com" target="_blank" rel="noopener">www.jigneshgharat.com</a></div>
+      <button class="again-btn" id="againBtn">Do It Again</button>
+    </div>
+  </div>
+
+  <script src="audio.js?v=97"></script>
+  <script src="energy.js?v=97"></script>
+  <script src="void.js?v=97"></script>
+</body>
+</html>
