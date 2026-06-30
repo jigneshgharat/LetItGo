@@ -197,7 +197,7 @@ void main() {
   // --- Output position ---
   vec2 screenPos = pos;
   screenPos.x /= u_aspect;
-  screenPos.y += 0.06;
+  screenPos.y += 0.18;
   screenPos += u_shake;
   gl_Position = vec4(screenPos, 0.0, 1.0);
 
