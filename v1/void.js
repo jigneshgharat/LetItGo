@@ -705,7 +705,15 @@ function updateBlackHole(dt) {
 
   const starvGravMul = bhStarving ? 4.0 : 1.0;
   const starvConsume = bhStarving ? BH_CONSUME_R * 3.0 : BH_CONSUME_R;
-  const starvDamp = bhStarving ? 0.988 : BH_DAMP;
+  // Damping factors below were tuned as a per-frame multiplier at a 60fps
+  // reference rate. Applied flatly, they'd decay velocity twice as fast on
+  // a 120Hz display (e.g. ProMotion) since the loop runs twice as often per
+  // second — draining the orbital/tangential momentum that makes the
+  // spiral swirl look right. Raising to the elapsed-time ratio makes the
+  // decay rate-per-second consistent regardless of refresh rate.
+  const REF_FRAME_TIME = 1 / 60;
+  const starvDampBase = bhStarving ? 0.988 : BH_DAMP;
+  const starvDamp = Math.pow(starvDampBase, cappedDt / REF_FRAME_TIME);
   const gCenter = BH_G_CENTER * starvGravMul;
 
   if (bhTime > ghostNextTime && ghostStrength === 0) {
