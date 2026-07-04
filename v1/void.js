@@ -13,7 +13,7 @@ if (!gl) {
 
 let W, H, scale;
 function resize() {
-  scale = window.devicePixelRatio || 1;
+  scale = Math.min(window.devicePixelRatio || 1, 1.5);
   W = window.innerWidth;
   H = window.innerHeight;
   canvas.width = W * scale;
@@ -357,7 +357,7 @@ let shakeX = 0, shakeY = 0;
 let shakeIntensity = 0;
 
 // --- Particles ---
-const PARTICLE_COUNT = 60000;
+const PARTICLE_COUNT = 45000;
 
 const scatter = new Float32Array(PARTICLE_COUNT * 2);
 const phase = new Float32Array(PARTICLE_COUNT);
@@ -545,7 +545,7 @@ const bhUSprite    = gl.getUniformLocation(bhProgram, 'u_sprite');
 const bhUTime      = gl.getUniformLocation(bhProgram, 'u_time');
 
 // 96k particles to match standalone blackhole.html density
-const BH_N = 96000;
+const BH_N = 72000;
 const bhPx = new Float32Array(BH_N);
 const bhPy = new Float32Array(BH_N);
 const bhVx = new Float32Array(BH_N);
@@ -877,7 +877,7 @@ const spriteTexture = createSpriteTexture();
 // --- GL state ---
 gl.enable(gl.BLEND);
 gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
-gl.clearColor(0.0, 0.0, 0.01, 1.0);
+gl.clearColor(0.051, 0.051, 0.071, 1.0);
 
 // --- Gather timing ---
 const SCATTER_WAIT = 6.5;
@@ -1416,9 +1416,7 @@ function restartToRing() {
 // --- Restart modal ---
 const restartOverlay = document.getElementById('restartOverlay');
 const againBtn = document.getElementById('againBtn');
-const feedbackQuestion = document.getElementById('feedbackQuestion');
 const feedbackOptions = document.getElementById('feedbackOptions');
-const feedbackThanks = document.getElementById('feedbackThanks');
 const feedbackNoteBtn = document.getElementById('feedbackNoteBtn');
 const feedbackNoteBox = document.getElementById('feedbackNoteBox');
 const feedbackNoteInput = document.getElementById('feedbackNoteInput');
@@ -1429,10 +1427,8 @@ let feedbackResponses = [];
 feedbackOptions.addEventListener('click', (e) => {
   const btn = e.target.closest('.feedback-btn');
   if (!btn || btn.classList.contains('selected')) return;
+  feedbackOptions.querySelectorAll('.feedback-btn').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
-  feedbackQuestion.classList.add('hidden');
-  feedbackOptions.classList.add('hidden');
-  feedbackThanks.classList.add('visible');
   feedbackResponses.push({
     feeling: btn.dataset.feeling,
     timestamp: Date.now()
@@ -1446,7 +1442,7 @@ feedbackNoteBtn.addEventListener('click', () => {
   feedbackNoteInput.focus();
 });
 
-const FEEDBACK_NOTE_LABEL = 'Let us know your feedback';
+const FEEDBACK_NOTE_LABEL = 'Give feedback';
 let feedbackNoteRevertTimer = null;
 
 feedbackNoteSubmit.addEventListener('click', () => {
@@ -1467,9 +1463,6 @@ feedbackNoteSubmit.addEventListener('click', () => {
 
 function resetFeedback() {
   feedbackOptions.querySelectorAll('.feedback-btn').forEach(b => b.classList.remove('selected'));
-  feedbackQuestion.classList.remove('hidden');
-  feedbackOptions.classList.remove('hidden');
-  feedbackThanks.classList.remove('visible');
   clearTimeout(feedbackNoteRevertTimer);
   feedbackNoteBtn.classList.remove('hidden');
   feedbackNoteBtn.classList.remove('submitted');
@@ -1482,6 +1475,57 @@ function showRestartModal() {
   resetFeedback();
   restartOverlay.classList.add('visible');
 }
+
+// --- Share ---
+const shareBtn = document.getElementById('shareBtn');
+const SHARE_URL = 'https://www.letitgo.in';
+
+function showShareConfirmation() {
+  const original = shareBtn.innerHTML;
+  shareBtn.classList.add('copied');
+  shareBtn.innerHTML = '<span class="material-icons-outlined">check</span> Link copied';
+  setTimeout(() => {
+    shareBtn.classList.remove('copied');
+    shareBtn.innerHTML = original;
+  }, 2000);
+}
+
+function legacyCopyFallback(text) {
+  const textarea = document.createElement('textarea');
+  textarea.value = text;
+  textarea.style.position = 'fixed';
+  textarea.style.left = '-9999px';
+  document.body.appendChild(textarea);
+  textarea.select();
+  try {
+    document.execCommand('copy');
+    showShareConfirmation();
+  } catch (err) {
+    console.warn('Share failed:', err);
+  }
+  document.body.removeChild(textarea);
+}
+
+shareBtn.addEventListener('click', async () => {
+  if (navigator.share) {
+    try {
+      await navigator.share({ url: SHARE_URL });
+    } catch (err) {
+      // User cancelled the share sheet — no action needed
+    }
+    return;
+  }
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    try {
+      await navigator.clipboard.writeText(SHARE_URL);
+      showShareConfirmation();
+      return;
+    } catch (err) {
+      // Falls through to the legacy copy method below
+    }
+  }
+  legacyCopyFallback(SHARE_URL);
+});
 
 againBtn.addEventListener('click', () => {
   restartOverlay.classList.remove('visible');

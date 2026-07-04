@@ -32,9 +32,14 @@ window.VoidEnergy = (() => {
   const infoModal = document.getElementById('infoModal');
   const infoModalClose = document.getElementById('infoModalClose');
   const voiceUnsupportedEl = document.getElementById('voiceUnsupported');
+  const restartLearnMoreBtn = document.getElementById('restartLearnMoreBtn');
 
   // --- Info modal open/close ---
   infoIcon.addEventListener('click', (e) => {
+    e.stopPropagation();
+    infoModal.classList.add('visible');
+  });
+  restartLearnMoreBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     infoModal.classList.add('visible');
   });
@@ -384,15 +389,44 @@ window.VoidEnergy = (() => {
     doneBtn.classList.remove('visible');
     doneBtn.style.opacity = '';
     doneBtn.style.pointerEvents = '';
+    doneBtn.style.transform = '';
     modeToggle.classList.remove('visible');
     modeToggle.style.opacity = '';
     modeToggle.style.pointerEvents = '';
+    modeToggle.style.transform = '';
     privacyNote.classList.remove('visible');
     infoIcon.classList.remove('visible');
     infoModal.classList.remove('visible');
     voiceUnsupportedEl.classList.remove('show');
   }
 
+
+  // --- Keyboard avoidance (mobile) ---
+  // On-screen keyboards overlay the bottom of the layout viewport without
+  // resizing it, so fixed-position controls near the bottom get covered.
+  // The VisualViewport API reports the actually-visible area, letting us
+  // shift the controls up by exactly the keyboard's height.
+  if (window.visualViewport) {
+    const vv = window.visualViewport;
+    const shiftUp = (el, extraTransform) => {
+      // Only shift while the hidden input actually has focus — this is the
+      // only scenario where a real on-screen keyboard should be open.
+      // Reacting to any viewport resize (e.g. mobile browser chrome
+      // hiding/showing) would misfire while in voice mode or idle.
+      const keyboardVisible = mode === 'type' && document.activeElement === hiddenInput;
+      const keyboardHeight = keyboardVisible
+        ? Math.max(0, window.innerHeight - vv.height - vv.offsetTop)
+        : 0;
+      const offset = keyboardHeight > 60 ? keyboardHeight : 0;
+      el.style.transform = offset ? `${extraTransform} translateY(-${offset}px)` : '';
+    };
+    const adjustForKeyboard = () => {
+      shiftUp(doneBtn, 'translateX(-50%)');
+      shiftUp(modeToggle, 'translateX(-50%)');
+    };
+    vv.addEventListener('resize', adjustForKeyboard);
+    vv.addEventListener('scroll', adjustForKeyboard);
+  }
 
   // --- Smooth energy output ---
   function updateEnergy() {
