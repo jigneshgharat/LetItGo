@@ -69,8 +69,13 @@ window.VoidEnergy = (() => {
       const textNode = document.createTextNode(displayText);
       const cursor = document.createElement('span');
       cursor.className = 'cursor';
-      ringText.appendChild(textNode);
-      ringText.appendChild(cursor);
+      if (isPlaceholder) {
+        ringText.appendChild(cursor);
+        ringText.appendChild(textNode);
+      } else {
+        ringText.appendChild(textNode);
+        ringText.appendChild(cursor);
+      }
       ringText.classList.add('active');
       ringText.classList.toggle('ring-placeholder', isPlaceholder);
     } else {
@@ -113,7 +118,11 @@ window.VoidEnergy = (() => {
   // Also init audio on first user gesture
   document.addEventListener('click', (e) => {
     if (window.VoidAudio) window.VoidAudio.init();
-    if (mode === 'type' && !e.target.closest('.mode-toggle') && !e.target.closest('.done-btn')) {
+    if (mode === 'type'
+      && !e.target.closest('.mode-toggle')
+      && !e.target.closest('.done-btn')
+      && !e.target.closest('.restart-overlay')
+      && !e.target.closest('.info-modal-overlay')) {
       hiddenInput.focus();
     }
   });
@@ -327,6 +336,13 @@ window.VoidEnergy = (() => {
     privacyNote.classList.remove('visible');
     infoIcon.classList.remove('visible');
     ringText.classList.add('collapse-text');
+    if (window.VoidFeedback) {
+      const releaseText = mode === 'voice' ? (transcript + interimTranscript) : typedText;
+      window.VoidFeedback.recordRelease({
+        inputMode: mode,
+        releaseLength: releaseText.trim().length,
+      });
+    }
     if (window.VoidCollapse) {
       window.VoidCollapse();
     }
@@ -345,6 +361,7 @@ window.VoidEnergy = (() => {
     updateTypeMode();
     updateRingText('', true);
     hiddenInput.focus();
+    if (window.VoidFeedback) window.VoidFeedback.startSession();
   }
 
   function reset() {

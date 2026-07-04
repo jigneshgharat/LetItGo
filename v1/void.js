@@ -790,7 +790,9 @@ function updateBlackHole(dt) {
       showClosingLine();
       setTimeout(() => {
         hideClosingLine();
+        breathGlowEl.classList.add('active');
         setTimeout(() => {
+          breathGlowEl.classList.remove('active');
           showRestartModal();
         }, 6000);
       }, 10000);
@@ -909,6 +911,7 @@ const closingLines = [
 ];
 let lastClosingIndex = -1;
 const closingLineEl = document.getElementById('closingLine');
+const breathGlowEl = document.getElementById('breathGlow');
 let closingShown = false;
 let closingScheduled = false;
 
@@ -992,20 +995,17 @@ function prepareTextDissolve() {
   el.style.transform = `translate(-50%, -50%) scale(${EROSION_SCALE})`;
 
   requestAnimationFrame(() => {
-    const rect = el.getBoundingClientRect();
     const pad = 14;
-    const w = Math.ceil(rect.width) + pad * 2;
-    const h = Math.ceil(rect.height) + pad * 2;
+    // Cap the wrapping width to the viewport so long messages never
+    // draw past the screen edges, regardless of the EROSION_SCALE zoom.
+    const safeMaxWidth = Math.min(window.innerWidth * 0.86, 760);
+    const maxWidth = safeMaxWidth - pad * 2;
 
     if (!erosionCanvas) {
       erosionCanvas = document.createElement('canvas');
       erosionCtx = erosionCanvas.getContext('2d');
     }
-    erosionCanvas.width = w;
-    erosionCanvas.height = h;
-
     const ctx = erosionCtx;
-    ctx.clearRect(0, 0, w, h);
 
     const style = getComputedStyle(el);
     const fontSize = parseFloat(style.fontSize) * EROSION_SCALE;
@@ -1015,11 +1015,32 @@ function prepareTextDissolve() {
     ctx.textBaseline = 'middle';
 
     const lineH = fontSize * 1.6;
+
+    function wrapWord(word) {
+      const chunks = [];
+      let cur = '';
+      for (const ch of word) {
+        const test = cur + ch;
+        if (ctx.measureText(test).width > maxWidth && cur) {
+          chunks.push(cur);
+          cur = ch;
+        } else {
+          cur = test;
+        }
+      }
+      if (cur) chunks.push(cur);
+      return chunks;
+    }
+
     const words = text.split(/\s+/);
-    const maxWidth = w - pad * 2;
     const lines = [];
     let currentLine = '';
     for (const word of words) {
+      if (ctx.measureText(word).width > maxWidth) {
+        if (currentLine) { lines.push(currentLine); currentLine = ''; }
+        lines.push(...wrapWord(word));
+        continue;
+      }
       const testLine = currentLine ? currentLine + ' ' + word : word;
       if (ctx.measureText(testLine).width > maxWidth && currentLine) {
         lines.push(currentLine);
@@ -1029,6 +1050,16 @@ function prepareTextDissolve() {
       }
     }
     if (currentLine) lines.push(currentLine);
+
+    const w = Math.ceil(safeMaxWidth);
+    const h = Math.ceil(lines.length * lineH) + pad * 2;
+    erosionCanvas.width = w;
+    erosionCanvas.height = h;
+    ctx.clearRect(0, 0, w, h);
+    ctx.font = `${style.fontWeight} ${fontSize}px ${style.fontFamily}`;
+    ctx.fillStyle = 'white';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
 
     const totalTextH = lines.length * lineH;
     const startY = (h - totalTextH) / 2 + lineH / 2;
@@ -1041,8 +1072,8 @@ function prepareTextDissolve() {
 
     erosionW = w;
     erosionH = h;
-    erosionOffX = rect.left - pad;
-    erosionOffY = rect.top - pad;
+    erosionOffX = W / 2 - w / 2;
+    erosionOffY = H / 2 - h / 2;
     erosionPixels = new Uint8Array(w * h);
     erosionTotalAlive = 0;
 
@@ -1385,26 +1416,66 @@ function restartToRing() {
 // --- Restart modal ---
 const restartOverlay = document.getElementById('restartOverlay');
 const againBtn = document.getElementById('againBtn');
+const feedbackQuestion = document.getElementById('feedbackQuestion');
 const feedbackOptions = document.getElementById('feedbackOptions');
 const feedbackThanks = document.getElementById('feedbackThanks');
+const feedbackNoteBtn = document.getElementById('feedbackNoteBtn');
+const feedbackNoteBox = document.getElementById('feedbackNoteBox');
+const feedbackNoteInput = document.getElementById('feedbackNoteInput');
+const feedbackNoteSubmit = document.getElementById('feedbackNoteSubmit');
 
 let feedbackResponses = [];
 
 feedbackOptions.addEventListener('click', (e) => {
   const btn = e.target.closest('.feedback-btn');
   if (!btn || btn.classList.contains('selected')) return;
-  feedbackOptions.querySelectorAll('.feedback-btn').forEach(b => b.classList.remove('selected'));
   btn.classList.add('selected');
+  feedbackQuestion.classList.add('hidden');
+  feedbackOptions.classList.add('hidden');
   feedbackThanks.classList.add('visible');
   feedbackResponses.push({
     feeling: btn.dataset.feeling,
     timestamp: Date.now()
   });
+  if (window.VoidFeedback) window.VoidFeedback.recordFeeling(btn.dataset.feeling);
+});
+
+feedbackNoteBtn.addEventListener('click', () => {
+  feedbackNoteBtn.classList.add('hidden');
+  feedbackNoteBox.classList.add('visible');
+  feedbackNoteInput.focus();
+});
+
+const FEEDBACK_NOTE_LABEL = 'Let us know your feedback';
+let feedbackNoteRevertTimer = null;
+
+feedbackNoteSubmit.addEventListener('click', () => {
+  const text = feedbackNoteInput.value.trim();
+  if (!text) return;
+  if (window.VoidFeedback) window.VoidFeedback.recordNote(text);
+  feedbackNoteBox.classList.remove('visible');
+  feedbackNoteInput.value = '';
+  feedbackNoteBtn.classList.remove('hidden');
+  feedbackNoteBtn.classList.add('submitted');
+  feedbackNoteBtn.textContent = 'Thanks for sharing';
+  clearTimeout(feedbackNoteRevertTimer);
+  feedbackNoteRevertTimer = setTimeout(() => {
+    feedbackNoteBtn.classList.remove('submitted');
+    feedbackNoteBtn.textContent = FEEDBACK_NOTE_LABEL;
+  }, 2500);
 });
 
 function resetFeedback() {
   feedbackOptions.querySelectorAll('.feedback-btn').forEach(b => b.classList.remove('selected'));
+  feedbackQuestion.classList.remove('hidden');
+  feedbackOptions.classList.remove('hidden');
   feedbackThanks.classList.remove('visible');
+  clearTimeout(feedbackNoteRevertTimer);
+  feedbackNoteBtn.classList.remove('hidden');
+  feedbackNoteBtn.classList.remove('submitted');
+  feedbackNoteBtn.textContent = FEEDBACK_NOTE_LABEL;
+  feedbackNoteBox.classList.remove('visible');
+  feedbackNoteInput.value = '';
 }
 
 function showRestartModal() {

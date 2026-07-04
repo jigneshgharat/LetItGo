@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
   <title>Let It Go</title>
   <style>
@@ -96,6 +96,25 @@
       transition: color 2s ease-out;
     }
 
+    /* --- Passive breathing pulse (after closing line, before restart) --- */
+    .breath-glow {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      z-index: 15;
+      pointer-events: none;
+      background: radial-gradient(circle at 50% 50%, rgba(140, 200, 230, 0.05) 0%, rgba(140, 200, 230, 0) 55%);
+      opacity: 0;
+      transition: opacity 2s ease-in-out;
+    }
+    .breath-glow.active {
+      opacity: 1;
+      animation: breathe 5s ease-in-out infinite;
+    }
+    @keyframes breathe {
+      0%, 100% { transform: scale(0.92); }
+      50% { transform: scale(1.08); }
+    }
+
     /* --- In-ring text display (typed or transcribed) --- */
     .ring-text {
       position: fixed;
@@ -131,6 +150,7 @@
     .ring-text.ring-placeholder {
       color: rgba(200, 230, 245, 0.55);
       font-weight: 400;
+      font-size: 0.95rem;
     }
     .ring-text .cursor {
       display: inline-block;
@@ -140,6 +160,10 @@
       vertical-align: text-bottom;
       margin-left: 2px;
       animation: blink 1s step-end infinite;
+    }
+    .ring-text.ring-placeholder .cursor {
+      margin-left: 0;
+      margin-right: 4px;
     }
     @keyframes blink {
       0%, 100% { opacity: 1; }
@@ -308,19 +332,19 @@
     }
     .info-modal {
       position: relative;
-      max-width: 580px;
+      max-width: 720px;
       width: 92%;
-      max-height: 80vh;
+      max-height: 85vh;
       overflow-y: auto;
-      padding: 44px 40px 40px;
+      padding: 32px 44px 24px;
       background: rgba(10, 20, 30, 0.95);
       border: 1px solid rgba(140, 200, 220, 0.12);
       border-radius: 18px;
       color: rgba(190, 220, 235, 0.85);
       font-family: 'Inter', sans-serif;
-      font-size: 0.88rem;
+      font-size: 0.85rem;
       font-weight: 300;
-      line-height: 1.75;
+      line-height: 1.6;
       letter-spacing: 0.02em;
       transform: scale(0.95);
       transition: transform 0.4s;
@@ -330,15 +354,15 @@
     }
     .info-modal-close {
       position: absolute;
-      top: 16px;
-      right: 18px;
-      width: 30px;
-      height: 30px;
+      top: 14px;
+      right: 16px;
+      width: 28px;
+      height: 28px;
       border: none;
       background: rgba(140, 200, 220, 0.06);
       border-radius: 50%;
       color: rgba(140, 200, 220, 0.45);
-      font-size: 1.15rem;
+      font-size: 1.1rem;
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -350,38 +374,49 @@
       background: rgba(140, 200, 220, 0.12);
     }
     .info-modal h2 {
-      font-size: 1.25rem;
+      font-size: 1.15rem;
       font-weight: 500;
       color: rgba(160, 210, 230, 0.95);
-      margin: 0 0 8px;
+      margin: 0 0 4px;
       letter-spacing: 0.06em;
     }
     .info-modal .info-subtitle {
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       color: rgba(140, 200, 220, 0.5);
-      margin: 0 0 32px;
+      margin: 0 0 18px;
       font-weight: 300;
     }
     .info-modal h3 {
-      font-size: 0.92rem;
+      font-size: 0.88rem;
       font-weight: 500;
       color: rgba(160, 210, 230, 0.8);
-      margin: 28px 0 12px;
+      margin: 16px 0 8px;
       letter-spacing: 0.04em;
     }
     .info-modal h3:first-of-type {
       margin-top: 0;
     }
     .info-modal p {
-      margin: 0 0 16px;
+      margin: 0 0 10px;
     }
     .info-modal .info-privacy {
-      margin-top: 28px;
-      padding-top: 20px;
-      border-top: 1px solid rgba(140, 200, 220, 0.08);
+      margin-top: 16px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(140, 200, 220, 0.06);
+    }
+    .info-modal .info-privacy h3 {
+      font-size: 0.68rem;
+      font-weight: 400;
+      color: rgba(140, 200, 220, 0.35);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin: 0 0 4px;
     }
     .info-modal .info-privacy p {
       margin-bottom: 0;
+      font-size: 0.72rem;
+      color: rgba(150, 190, 210, 0.4);
+      line-height: 1.5;
     }
 
     /* --- Privacy reassurance --- */
@@ -446,11 +481,17 @@
     }
     .restart-modal {
       text-align: center;
-      max-width: 340px;
-      padding: 40px 36px 32px;
+      max-width: 480px;
+      padding: 40px 32px 32px;
     }
     .restart-modal .feedback-section {
-      margin-bottom: 40px;
+      margin-bottom: 28px;
+    }
+    .restart-modal .feedback-card {
+      padding: 24px 28px;
+      border: 1px solid rgba(140, 200, 220, 0.12);
+      border-radius: 16px;
+      background: rgba(140, 200, 220, 0.03);
     }
     .restart-modal .feedback-question {
       font-family: 'Inter', sans-serif;
@@ -459,23 +500,32 @@
       letter-spacing: 0.04em;
       color: rgba(180, 215, 235, 0.6);
       margin-bottom: 16px;
+      transition: opacity 0.3s;
+    }
+    .restart-modal .feedback-question.hidden {
+      display: none;
     }
     .restart-modal .feedback-options {
       display: flex;
-      gap: 10px;
+      gap: 8px;
       justify-content: center;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
+      transition: opacity 0.3s;
+    }
+    .restart-modal .feedback-options.hidden {
+      display: none;
     }
     .restart-modal .feedback-btn {
-      padding: 8px 16px;
+      padding: 8px 14px;
       background: rgba(140, 200, 220, 0.06);
       border: 1px solid rgba(140, 200, 220, 0.15);
       border-radius: 20px;
       color: rgba(180, 215, 235, 0.6);
       font-family: 'Inter', sans-serif;
-      font-size: 0.78rem;
+      font-size: 0.76rem;
       font-weight: 300;
-      letter-spacing: 0.03em;
+      letter-spacing: 0.02em;
+      white-space: nowrap;
       cursor: pointer;
       transition: all 0.3s;
     }
@@ -491,15 +541,90 @@
     }
     .restart-modal .feedback-thanks {
       font-family: 'Inter', sans-serif;
-      font-size: 0.78rem;
+      font-size: 1.15rem;
       font-weight: 300;
-      color: rgba(140, 200, 220, 0.45);
-      margin-top: 12px;
+      letter-spacing: 0.02em;
+      line-height: 1.8;
+      color: rgba(200, 230, 245, 0.8);
+      display: none;
       opacity: 0;
-      transition: opacity 0.5s;
+      transition: opacity 0.6s;
     }
     .restart-modal .feedback-thanks.visible {
+      display: block;
       opacity: 1;
+    }
+    .restart-modal .feedback-note-wrap {
+      margin-top: 24px;
+    }
+    .restart-modal .feedback-note-btn {
+      display: inline-block;
+      padding: 6px 14px;
+      background: transparent;
+      border: 1px solid rgba(140, 200, 220, 0.12);
+      border-radius: 16px;
+      color: rgba(140, 200, 220, 0.4);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.7rem;
+      font-weight: 300;
+      letter-spacing: 0.03em;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .restart-modal .feedback-note-btn:hover {
+      color: rgba(180, 220, 240, 0.7);
+      border-color: rgba(140, 200, 220, 0.25);
+    }
+    .restart-modal .feedback-note-btn.hidden {
+      display: none;
+    }
+    .restart-modal .feedback-note-btn.submitted {
+      color: rgba(150, 230, 200, 0.75);
+      border-color: rgba(150, 230, 200, 0.35);
+      background: rgba(150, 230, 200, 0.06);
+      cursor: default;
+    }
+    .restart-modal .feedback-note-box {
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: max-height 0.4s ease, opacity 0.3s;
+    }
+    .restart-modal .feedback-note-box.visible {
+      max-height: 160px;
+      opacity: 1;
+    }
+    .restart-modal .feedback-note-box textarea {
+      display: block;
+      width: 100%;
+      min-height: 60px;
+      resize: none;
+      background: rgba(140, 200, 220, 0.04);
+      border: 1px solid rgba(140, 200, 220, 0.15);
+      border-radius: 10px;
+      color: rgba(210, 235, 245, 0.85);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.78rem;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+    }
+    .restart-modal .feedback-note-box textarea::placeholder {
+      color: rgba(150, 190, 210, 0.35);
+    }
+    .restart-modal .feedback-note-submit {
+      padding: 6px 20px;
+      background: rgba(100, 200, 230, 0.12);
+      border: 1px solid rgba(100, 200, 230, 0.35);
+      border-radius: 16px;
+      color: rgba(200, 235, 245, 0.85);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.74rem;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    .restart-modal .feedback-note-submit:hover {
+      background: rgba(100, 200, 230, 0.22);
+      border-color: rgba(100, 200, 230, 0.6);
     }
     .restart-modal .creator-label {
       font-family: 'Inter', sans-serif;
@@ -508,6 +633,7 @@
       letter-spacing: 0.12em;
       text-transform: uppercase;
       color: rgba(160, 190, 210, 0.4);
+      margin-top: 32px;
       margin-bottom: 6px;
     }
     .restart-modal .creator-name {
@@ -551,6 +677,127 @@
       border-color: rgba(100, 200, 230, 0.65);
       color: rgba(220, 245, 255, 1);
     }
+
+    /* ============================================================
+       MOBILE — scale text and spacing down for narrow screens.
+       Desktop/laptop styles above are untouched.
+       ============================================================ */
+    @media (max-width: 600px) {
+      .landing-title {
+        font-size: 2.3rem;
+        margin-bottom: 10px;
+      }
+      .landing-tagline {
+        font-size: 0.85rem;
+        letter-spacing: 0.14em;
+      }
+      .closing-line {
+        font-size: 1.15rem;
+        line-height: 1.9;
+        white-space: normal;
+        max-width: 82vw;
+      }
+      .ring-text {
+        width: 80vw;
+        font-size: 1.02rem;
+      }
+      .ring-text.ring-placeholder {
+        font-size: 0.72rem;
+      }
+      .mode-btn {
+        width: 44px;
+        height: 44px;
+      }
+      .mode-btn .material-icons-outlined {
+        font-size: 26px;
+      }
+      .done-btn {
+        padding: 12px 44px;
+        font-size: 0.82rem;
+        letter-spacing: 0.1em;
+      }
+      .info-icon {
+        top: 18px;
+        right: 18px;
+        padding: 5px 13px;
+        font-size: 0.66rem;
+      }
+      .info-modal {
+        padding: 26px 22px 20px;
+        font-size: 0.78rem;
+        line-height: 1.55;
+      }
+      .info-modal h2 {
+        font-size: 1.05rem;
+      }
+      .info-modal .info-subtitle {
+        font-size: 0.74rem;
+        margin-bottom: 14px;
+      }
+      .info-modal h3 {
+        font-size: 0.8rem;
+      }
+      .info-modal .info-privacy h3 {
+        font-size: 0.62rem;
+      }
+      .info-modal .info-privacy p {
+        font-size: 0.68rem;
+      }
+      .privacy-note {
+        font-size: 0.6rem;
+        bottom: 38px;
+      }
+      .voice-unsupported {
+        font-size: 0.7rem;
+        padding: 7px 16px;
+      }
+      .restart-modal {
+        max-width: 88vw;
+        padding: 32px 24px 26px;
+      }
+      .restart-modal .feedback-card {
+        padding: 18px 16px;
+      }
+      .restart-modal .feedback-question {
+        font-size: 0.76rem;
+      }
+      .restart-modal .feedback-options {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+      }
+      .restart-modal .feedback-btn {
+        font-size: 0.72rem;
+        padding: 8px 10px;
+      }
+      .restart-modal .feedback-thanks {
+        font-size: 0.95rem;
+      }
+      .restart-modal .creator-label {
+        font-size: 0.62rem;
+        margin-top: 26px;
+      }
+      .restart-modal .creator-name {
+        font-size: 1.02rem;
+      }
+      .restart-modal .creator-site {
+        font-size: 0.7rem;
+        margin-bottom: 28px;
+      }
+      .restart-modal .again-btn {
+        font-size: 0.82rem;
+        padding: 12px 42px;
+      }
+      .restart-modal .feedback-note-btn {
+        font-size: 0.66rem;
+      }
+      .restart-modal .feedback-note-box textarea {
+        font-size: 0.72rem;
+      }
+      .restart-modal .feedback-note-submit {
+        font-size: 0.68rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -562,6 +809,7 @@
     <div class="landing-tagline" id="landingTagline"><span class="tagline-part" id="tag1">say it.</span> <span class="tagline-part" id="tag2">feel it.</span> <span class="tagline-part" id="tag3">release it.</span></div>
   </div>
   <div class="closing-line" id="closingLine"></div>
+  <div class="breath-glow" id="breathGlow"></div>
   <div class="ring-text" id="ringText"></div>
 
   <!-- Info icon + modal -->
@@ -614,14 +862,23 @@
   <div class="restart-overlay" id="restartOverlay">
     <div class="restart-modal">
       <div class="feedback-section" id="feedbackSection">
-        <div class="feedback-question">How do you feel?</div>
-        <div class="feedback-options" id="feedbackOptions">
-          <button class="feedback-btn" data-feeling="lighter">Lighter</button>
-          <button class="feedback-btn" data-feeling="calm">Calm</button>
-          <button class="feedback-btn" data-feeling="reflective">Reflective</button>
-          <button class="feedback-btn" data-feeling="unchanged">Unchanged</button>
+        <div class="feedback-card">
+          <div class="feedback-question" id="feedbackQuestion">How do you feel?</div>
+          <div class="feedback-options" id="feedbackOptions">
+            <button class="feedback-btn" data-feeling="lighter">Lighter</button>
+            <button class="feedback-btn" data-feeling="calm">Calm</button>
+            <button class="feedback-btn" data-feeling="reflective">Reflective</button>
+            <button class="feedback-btn" data-feeling="unchanged">Unchanged</button>
+          </div>
+          <div class="feedback-thanks" id="feedbackThanks">Take a deep breath.</div>
         </div>
-        <div class="feedback-thanks" id="feedbackThanks">Thank you</div>
+        <div class="feedback-note-wrap">
+          <button class="feedback-note-btn" id="feedbackNoteBtn">Let us know your feedback</button>
+          <div class="feedback-note-box" id="feedbackNoteBox">
+            <textarea id="feedbackNoteInput" maxlength="280" placeholder="Optional — a line or two..."></textarea>
+            <button class="feedback-note-submit" id="feedbackNoteSubmit">Submit</button>
+          </div>
+        </div>
       </div>
       <div class="creator-label">created by</div>
       <div class="creator-name">Jignesh Gharat</div>
@@ -630,8 +887,11 @@
     </div>
   </div>
 
-  <script src="audio.js?v=97"></script>
-  <script src="energy.js?v=97"></script>
-  <script src="void.js?v=97"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+  <script src="feedback.js?v=100"></script>
+  <script src="audio.js?v=100"></script>
+  <script src="energy.js?v=100"></script>
+  <script src="void.js?v=100"></script>
 </body>
 </html>
