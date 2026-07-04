@@ -37,7 +37,7 @@ window.VoidAudio = (() => {
     try {
       const [ring, collapse] = await Promise.all([
         loadAudio('Audio/Stage2_Interstellar%20Rest.mp3'),
-        loadAudio('Audio/Stage3_Where%20we%27re%20going%20-%20Hans%20Zimmer%20-%20Interstellar%20-%20(SlowedReverb).mp3'),
+        loadAudio('Audio/Stage3_Hans%20Zimmer%20-%20Cornfield%20Chase.mp3'),
       ]);
       ringBuffer = ring;
       ringLoaded = true;
