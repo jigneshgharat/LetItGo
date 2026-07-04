@@ -386,8 +386,6 @@ window.VoidEnergy = (() => {
     ringText.classList.remove('active', 'collapse-text');
     ringText.style.opacity = '';
     ringText.style.transition = '';
-    ringText.style.top = '';
-    ringText.style.maxHeight = '';
     doneBtn.classList.remove('visible');
     doneBtn.style.opacity = '';
     doneBtn.style.pointerEvents = '';
@@ -404,11 +402,17 @@ window.VoidEnergy = (() => {
 
   // --- Keyboard avoidance (mobile) ---
   // On-screen keyboards overlay the bottom of the layout viewport without
-  // resizing it, so fixed-position controls near the bottom get covered.
+  // resizing it (window.innerHeight is unchanged — only visualViewport
+  // shrinks), so fixed-position controls near the bottom get covered.
   // The VisualViewport API reports the actually-visible area, letting us
   // reposition the "Let It Go" button to sit just above the keyboard.
-  // The mode toggle (type/speak) is left alone — it's fine for it to sit
-  // behind the keyboard since it isn't needed while actively typing.
+  //
+  // The ring itself is rendered on a canvas sized from window.innerHeight,
+  // so it never moves when the keyboard opens — and ring-text's normal
+  // position (anchored to that same unchanging window height) is already
+  // close to the ring in the visible area, so it's left alone here too.
+  // The mode toggle (type/speak) is also left alone — it's fine for it to
+  // sit behind the keyboard since it isn't needed while actively typing.
   const DONE_BTN_KEYBOARD_GAP = 16;
   if (window.visualViewport) {
     const vv = window.visualViewport;
@@ -425,17 +429,6 @@ window.VoidEnergy = (() => {
       doneBtn.style.bottom = keyboardOpen
         ? `${keyboardHeight + DONE_BTN_KEYBOARD_GAP}px`
         : '';
-      // Also pull the typed-text preview up into the space that's still
-      // visible above the keyboard, instead of leaving it pinned at its
-      // usual middle-of-screen position — otherwise longer entries grow
-      // down into the button sitting just above the keyboard.
-      if (keyboardOpen) {
-        ringText.style.top = `${vv.height * 0.32}px`;
-        ringText.style.maxHeight = `${vv.height * 0.42}px`;
-      } else {
-        ringText.style.top = '';
-        ringText.style.maxHeight = '';
-      }
     };
     vv.addEventListener('resize', adjustForKeyboard);
     vv.addEventListener('scroll', adjustForKeyboard);
