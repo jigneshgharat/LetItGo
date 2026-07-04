@@ -794,7 +794,7 @@ function updateBlackHole(dt) {
         setTimeout(() => {
           breathGlowEl.classList.remove('active');
           showRestartModal();
-        }, 6000);
+        }, 1000);
       }, 10000);
     }, 4000);
   }

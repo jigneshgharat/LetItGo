@@ -386,6 +386,8 @@ window.VoidEnergy = (() => {
     ringText.classList.remove('active', 'collapse-text');
     ringText.style.opacity = '';
     ringText.style.transition = '';
+    ringText.style.top = '';
+    ringText.style.maxHeight = '';
     doneBtn.classList.remove('visible');
     doneBtn.style.opacity = '';
     doneBtn.style.pointerEvents = '';
@@ -419,9 +421,21 @@ window.VoidEnergy = (() => {
       const keyboardHeight = keyboardVisible
         ? Math.max(0, window.innerHeight - vv.height - vv.offsetTop)
         : 0;
-      doneBtn.style.bottom = keyboardHeight > 60
+      const keyboardOpen = keyboardHeight > 60;
+      doneBtn.style.bottom = keyboardOpen
         ? `${keyboardHeight + DONE_BTN_KEYBOARD_GAP}px`
         : '';
+      // Also pull the typed-text preview up into the space that's still
+      // visible above the keyboard, instead of leaving it pinned at its
+      // usual middle-of-screen position — otherwise longer entries grow
+      // down into the button sitting just above the keyboard.
+      if (keyboardOpen) {
+        ringText.style.top = `${vv.height * 0.32}px`;
+        ringText.style.maxHeight = `${vv.height * 0.42}px`;
+      } else {
+        ringText.style.top = '';
+        ringText.style.maxHeight = '';
+      }
     };
     vv.addEventListener('resize', adjustForKeyboard);
     vv.addEventListener('scroll', adjustForKeyboard);

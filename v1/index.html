@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
   <title>Let It Go</title>
@@ -16,6 +16,7 @@
       height: 100vh;
       cursor: default;
       font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      touch-action: manipulation;
     }
 
     canvas {
@@ -23,6 +24,7 @@
       position: fixed;
       top: 0;
       left: 0;
+      touch-action: manipulation;
     }
 
     /* --- Landing title + tagline (top half) --- */
@@ -705,6 +707,12 @@
        Desktop/laptop styles above are untouched.
        ============================================================ */
     @media (max-width: 600px) {
+      /* Voice input isn't reliable across mobile browsers (notably iOS,
+         where no browser implements SpeechRecognition) — keep the type
+         option only on mobile. Desktop is unaffected. */
+      .voice-wrap {
+        display: none;
+      }
       .landing-title {
         font-size: 1.9rem;
         letter-spacing: 0.08em;
@@ -875,7 +883,7 @@
       </button>
       <span class="btn-tooltip">type</span>
     </div>
-    <div class="mode-btn-wrap">
+    <div class="mode-btn-wrap voice-wrap">
       <button class="mode-btn" id="btnVoice" data-mode="voice">
         <span class="material-icons-outlined">mic</span>
       </button>
@@ -937,9 +945,9 @@
 
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script src="feedback.js?v=108"></script>
-  <script src="audio.js?v=108"></script>
-  <script src="energy.js?v=108"></script>
-  <script src="void.js?v=108"></script>
+  <script src="feedback.js?v=109"></script>
+  <script src="audio.js?v=109"></script>
+  <script src="energy.js?v=109"></script>
+  <script src="void.js?v=109"></script>
 </body>
 </html>
