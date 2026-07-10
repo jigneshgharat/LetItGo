@@ -733,6 +733,20 @@
       .ring-text {
         width: 80vw;
         font-size: 1.02rem;
+        /* On mobile, longer entries used to grow both up and down from a
+           centered anchor, so the bottom of the text could collide with
+           the "Let It Go" button below it. Anchor at the bottom edge
+           instead so text only grows upward, away from the button, and
+           clip anything beyond a few lines rather than overflow further. */
+        top: auto;
+        bottom: 48%;
+        transform: translateX(-50%);
+        height: 150px;
+        max-height: none;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        align-items: center;
       }
       .ring-text.ring-placeholder {
         font-size: 0.72rem;
@@ -945,9 +959,9 @@
 
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script src="feedback.js?v=112"></script>
-  <script src="audio.js?v=112"></script>
-  <script src="energy.js?v=112"></script>
-  <script src="void.js?v=112"></script>
+  <script src="feedback.js?v=113"></script>
+  <script src="audio.js?v=113"></script>
+  <script src="energy.js?v=113"></script>
+  <script src="void.js?v=113"></script>
 </body>
 </html>
