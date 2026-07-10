@@ -60,7 +60,20 @@ window.VoidAudio = (() => {
 
     masterGain = ctx.createGain();
     masterGain.gain.value = 0;
-    masterGain.connect(ctx.destination);
+
+    // Gentle compressor on the final mix — raises perceived loudness of
+    // quieter passages (e.g. the collapse track's slow build-ups) without
+    // touching moments that already peak at full scale, so the climax
+    // never clips even as the overall mix reads louder.
+    const compressor = ctx.createDynamicsCompressor();
+    compressor.threshold.setValueAtTime(-20, ctx.currentTime);
+    compressor.knee.setValueAtTime(20, ctx.currentTime);
+    compressor.ratio.setValueAtTime(3, ctx.currentTime);
+    compressor.attack.setValueAtTime(0.01, ctx.currentTime);
+    compressor.release.setValueAtTime(0.3, ctx.currentTime);
+
+    masterGain.connect(compressor);
+    compressor.connect(ctx.destination);
 
     // Set up gain nodes
     ringGain = ctx.createGain();
@@ -120,7 +133,7 @@ window.VoidAudio = (() => {
     // Fade in the collapse track
     const now = ctx.currentTime;
     collapseGain.gain.setValueAtTime(0, now);
-    collapseGain.gain.linearRampToValueAtTime(0.8, now + 3);
+    collapseGain.gain.linearRampToValueAtTime(0.95, now + 3);
   }
 
 
@@ -138,7 +151,7 @@ window.VoidAudio = (() => {
       ringStarted = true;
       startRingAudio();
       ringGain.gain.setValueAtTime(0, ctx.currentTime);
-      ringGain.gain.linearRampToValueAtTime(0.6, ctx.currentTime + 1);
+      ringGain.gain.linearRampToValueAtTime(0.85, ctx.currentTime + 1);
     }
 
     // ---- Stage 2: Ring active — volume breathes gently ----
@@ -148,7 +161,7 @@ window.VoidAudio = (() => {
       const breathMix = breath * 0.5 + deepBreath * 0.5;
 
       // Gentle breathing on the volume + slight boost with energy
-      const vol = 0.55 + breathMix * 0.1 + energy * 0.2;
+      const vol = 0.78 + breathMix * 0.12 + energy * 0.25;
       ringGain.gain.setTargetAtTime(vol, now, 0.5);
     }
 
@@ -164,15 +177,17 @@ window.VoidAudio = (() => {
       // Collapse track volume follows collapse progress
       if (collapseSource) {
         if (collapse < 0.78) {
-          // Main body: full volume
-          collapseGain.gain.setTargetAtTime(0.85, now, 0.5);
+          // Main body: full volume — the source file already peaks at
+          // 0dB (full scale), so 1.0 gain is the loudest this can go
+          // without clipping the track's own climactic moments.
+          collapseGain.gain.setTargetAtTime(1.0, now, 0.5);
         } else if (collapse < 0.88) {
           // Singularity: maintain
-          collapseGain.gain.setTargetAtTime(0.8, now, 0.3);
+          collapseGain.gain.setTargetAtTime(0.95, now, 0.3);
         } else {
           // Ember phase: fade collapse track out
           const fadeP = (collapse - 0.88) / 0.12;
-          collapseGain.gain.setTargetAtTime(0.8 * (1 - fadeP), now, 0.3);
+          collapseGain.gain.setTargetAtTime(0.95 * (1 - fadeP), now, 0.3);
           masterGain.gain.setTargetAtTime(1.0 * (1 - fadeP * 0.85), now, 1.0);
         }
       }
@@ -207,7 +222,7 @@ window.VoidAudio = (() => {
     if (ringLoaded) {
       startRingAudio();
       ringGain.gain.setValueAtTime(0, now);
-      ringGain.gain.linearRampToValueAtTime(0.6, now + 3);
+      ringGain.gain.linearRampToValueAtTime(0.85, now + 3);
       ringStarted = true;
     }
   }
