@@ -739,14 +739,17 @@
            instead so text only grows upward, away from the button, and
            clip anything beyond a few lines rather than overflow further. */
         top: auto;
-        bottom: 48%;
+        bottom: 55%;
         transform: translateX(-50%);
         height: 150px;
         max-height: none;
         display: flex;
         flex-direction: column;
         justify-content: flex-end;
-        align-items: center;
+        /* NOT align-items: center — that would let the (single) flex
+           item shrink-to-fit its content width instead of stretching
+           to the container's width, so text would never wrap. */
+        align-items: stretch;
       }
       .ring-text.ring-placeholder {
         font-size: 0.72rem;
@@ -959,9 +962,9 @@
 
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-  <script src="feedback.js?v=113"></script>
-  <script src="audio.js?v=113"></script>
-  <script src="energy.js?v=113"></script>
-  <script src="void.js?v=113"></script>
+  <script src="feedback.js?v=115"></script>
+  <script src="audio.js?v=115"></script>
+  <script src="energy.js?v=115"></script>
+  <script src="void.js?v=115"></script>
 </body>
 </html>

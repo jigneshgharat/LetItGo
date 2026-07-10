@@ -71,16 +71,24 @@ window.VoidEnergy = (() => {
       ringText.innerHTML = '';
       const isPlaceholder = text === '';
       const displayText = isPlaceholder ? PLACEHOLDER_TEXT : text;
+      // Wrap the cursor + text in a single element rather than appending
+      // them as separate direct children of the flex container — on
+      // mobile, .ring-text is display:flex, and browsers can otherwise
+      // split contiguous inline content into separate anonymous flex
+      // items, stacking the cursor away from the text instead of
+      // keeping them on the same line.
+      const wrapper = document.createElement('span');
       const textNode = document.createTextNode(displayText);
       const cursor = document.createElement('span');
       cursor.className = 'cursor';
       if (isPlaceholder) {
-        ringText.appendChild(cursor);
-        ringText.appendChild(textNode);
+        wrapper.appendChild(cursor);
+        wrapper.appendChild(textNode);
       } else {
-        ringText.appendChild(textNode);
-        ringText.appendChild(cursor);
+        wrapper.appendChild(textNode);
+        wrapper.appendChild(cursor);
       }
+      ringText.appendChild(wrapper);
       ringText.classList.add('active');
       ringText.classList.toggle('ring-placeholder', isPlaceholder);
     } else {
