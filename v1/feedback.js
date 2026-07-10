@@ -1,7 +1,9 @@
 // ============================================================
 // LET IT GO — Anonymous feedback & usage tracking (Firebase)
-// Tracks: input mode, release length, completion, feeling, note.
-// Never stores what the user actually typed or said.
+// Tracks: input mode, release length, completion, feeling, note,
+// and a coarse city/region/country derived from IP (via ipapi.co).
+// Never stores what the user actually typed or said, and never
+// stores the raw IP address itself.
 // ============================================================
 
 const firebaseConfig = {
@@ -52,6 +54,25 @@ window.VoidFeedback = (() => {
     return true;
   }
 
+  // --- Coarse location (city/region/country only, derived from IP) ---
+  // The IP itself is never stored — only what the lookup resolves it to.
+  function fetchGeo() {
+    return fetch('https://ipwho.is/')
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data.success) return null;
+        return {
+          city: data.city || null,
+          region: data.region || null,
+          country: data.country || null,
+        };
+      })
+      .catch((err) => {
+        console.warn('[Feedback] geo lookup failed:', err);
+        return null;
+      });
+  }
+
   let sessionDocRef = null;
   let sessionStarted = false;
 
@@ -65,11 +86,19 @@ window.VoidFeedback = (() => {
       releaseLength: 0,
       feeling: null,
       note: '',
+      city: null,
+      region: null,
+      country: null,
       completed: false,
       startedAt: firebase.firestore.FieldValue.serverTimestamp(),
       completedAt: null,
     }).then((ref) => {
       sessionDocRef = ref;
+      fetchGeo().then((geo) => {
+        if (geo && sessionDocRef) {
+          sessionDocRef.update(geo).catch((err) => console.warn('[Feedback] geo update failed:', err));
+        }
+      });
     }).catch((err) => {
       console.warn('[Feedback] startSession failed:', err);
     });

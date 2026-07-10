@@ -802,9 +802,9 @@ function updateBlackHole(dt) {
         setTimeout(() => {
           breathGlowEl.classList.remove('active');
           showRestartModal();
-        }, 1000);
-      }, 10000);
-    }, 4000);
+        }, 2000);
+      }, 5000);
+    }, 2000);
   }
   gl.bindBuffer(gl.ARRAY_BUFFER, bhPosGLBuf);
   gl.bufferSubData(gl.ARRAY_BUFFER, 0, bhPosBufArr);
